@@ -44,7 +44,20 @@ public class ShuntingYard {
         Queue<String> queue= new LinkedList<>();
         String postfix="";
 
-        ArrayList<String> result=this.tokenize(infix); //tokenize first
+        ArrayList<String> result=this.tokenize(infix);//tokenize first
+
+        for(int i=1;i<result.size();i++)
+        {
+            if(isOperator(result.get(i)) && isOperator(result.get(i-1))) //check the consecutive operators
+            {
+                throw new InvalidExpressionException();
+            }
+            if(i==result.size()-1 && this.isOperator(result.get(i))) //check whether the expression ends with operator
+            {
+                throw new InvalidExpressionException();
+            }
+        }
+
         for(int i=0;i<result.size();i++)
         {
             if(this.isNumber(result.get(i))) //if number, directly add to queue
@@ -201,10 +214,58 @@ public class ShuntingYard {
         //   - If number: push to stack
         //   - If operator: pop two values, compute, push result
         // - Final stack value is the answer
+        ArrayList<String> evaluate=new ArrayList<>();
+        evaluate=this.tokenize(postfix);
+
+        Stack<String> stack= new Stack<>();
+        double num1=0;
+        double num2=0;
+        String result="";
+
+
+        for(int i=0;i<evaluate.size();i++)
+        {
+            if(this.isNumber(evaluate.get(i))) //if number, add directly to stack
+            {
+             stack.add(evaluate.get(i));
+            }
+            else if(this.isOperator(evaluate.get(i))) //evaluate the expressions
+            {
+             num2=Double.parseDouble(stack.peek());
+             stack.pop();
+             num1=Double.parseDouble(stack.peek());
+             stack.pop();
+             if(evaluate.get(i).equals("*"))
+             {
+                 result=String.valueOf(num1*num2);
+                 stack.add(result);
+             }
+             else if(evaluate.get(i).equals("/"))
+             {
+                 result=String.valueOf(num1/num2);
+                 stack.add(result);
+             }
+             else if(evaluate.get(i).equals("+"))
+             {
+                 result=String.valueOf(num1+num2);
+                 stack.add(result);
+             }
+             else if(evaluate.get(i).equals("-"))
+             {
+                 result=String.valueOf(num1-num2);
+                 stack.add(result);
+             }
+             else if(evaluate.get(i).equals("^"))
+             {
+                 result=String.valueOf(Math.pow(num1,num2));
+                 stack.add(result);
+             }
+            }
+        }
 
 
 
-        return 0.0;
+        return Double.parseDouble(stack.peek());
     }
 
 
@@ -221,6 +282,8 @@ public class ShuntingYard {
         // TODO: Break the expression into tokens
         // Example: "3 + -4 * 2" -> ["3", "+", "-4", "*", "2"]
         int check=0;
+        String token="";
+        boolean checkOperator=false;
         if(expression.isEmpty())
         {
             throw new InvalidExpressionException();
@@ -230,25 +293,31 @@ public class ShuntingYard {
         while(expression.contains(" ")) // separate tokens based on spaces
         {
             newInd=expression.indexOf(" ");
-            result.add(expression.substring(0,newInd));
-            if(expression.substring(0,newInd).equals("("))
+            token=expression.substring(0,newInd);
+            result.add(token);
+            if(token.equals("("))//check whether there are matching parentheses
             {
              check++;
             }
-            if(expression.substring(0,newInd).equals(")"))
+            if(token.equals(")"))
             {
                 check--;
             }
             expression=expression.substring(newInd+1);
         }
-        if(expression.equals(")"))
+        if(expression.equals(")"))//check the last term
         {
             check--;
         }
-        if(check!=0)
+        if(expression.equals("("))
+        {
+            check++;
+        }
+        if(check!=0) //unmatched parentheses
         {
             throw new InvalidExpressionException();
         }
+
         result.add(expression);
 
         return result;
